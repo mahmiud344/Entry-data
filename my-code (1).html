@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدخال البيانات</title>
+    
+    <script type="module">
+        // استيراد مكتبات Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxweauIz4QizJNJtlYw61R0MTvsvjXwng",
+            authDomain: "my-newjob-82e79.firebaseapp.com",
+            databaseURL: "https://my-newjob-82e79-default-rtdb.firebaseio.com",
+            projectId: "my-newjob-82e79",
+            storageBucket: "my-newjob-82e79.firebasestorage.app",
+            messagingSenderId: "389693962078",
+            appId: "1:389693962078:web:bc7f191e88ad167eaec1cf",
+            measurementId: "G-GV3L3X0M4F"
+        };
+
+        // تهيئة التطبيق وقاعدة البيانات
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // دالة لإضافة البيانات إلى Firebase
+        window.addData = function () {
+            let aviso = document.getElementById("aviso").value.trim();
+            let link = document.getElementById("link").value.trim();
+            let notes = document.getElementById("notes").value.trim();
+
+            if (!aviso || !link || !notes) {
+                alert("يرجى ملء جميع الحقول!");
+                return;
+            }
+
+            push(ref(db, "data/"), { aviso, link, notes })
+                .then(() => {
+                    alert("تمت الإضافة بنجاح!");
+                    document.getElementById("aviso").value = "";
+                    document.getElementById("link").value = "";
+                    document.getElementById("notes").value = "";
+                    loadLinks(); // تحديث قائمة الروابط
+                })
+                .catch(error => console.error("خطأ في الإضافة:", error));
+        };
+
+        // تحميل البيانات من Firebase تلقائيًا
+        function loadData() {
+            const tableBody = document.getElementById("dataTableBody");
+            tableBody.innerHTML = "";
+
+            onValue(ref(db, "data/"), (snapshot) => {
+                tableBody.innerHTML = "";
+                let count = 0;
+
+                snapshot.forEach(childSnapshot => {
+                    let data = childSnapshot.val();
+                    let id = childSnapshot.key;
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td>${data.aviso}</td>
+                            <td>${data.link}</td>
+                            <td>${data.notes}</td>
+                            <td><button onclick="deleteData('${id}')">❌ حذف</button></td>
+                        </tr>`;
+                    count++;
+                });
+
+                document.getElementById("counter").innerText = `عدد الروابط: ${count}`;
+                loadLinks(); // تحديث قائمة الروابط في قائمة اليوزرات
+            });
+        }
+
+        // دالة حذف البيانات من Firebase
+        window.deleteData = function (id) {
+            remove(ref(db, "data/" + id))
+                .then(() => alert("تم الحذف بنجاح!"))
+                .catch(error => console.error("خطأ في الحذف:", error));
+        };
+
+        // تحميل الروابط في قائمة "إدخال يوزرات جاهزة"
+        function loadLinks() {
+            let select = document.getElementById("userLink");
+            select.innerHTML = '<option value="">اختر link</option>';
+
+            onValue(ref(db, "data/"), (snapshot) => {
+                snapshot.forEach(childSnapshot => {
+                    let data = childSnapshot.val();
+                    select.innerHTML += `<option value="${data.link}">${data.link}</option>`;
+                });
+            });
+        }
+
+        // دالة لإضافة يوزر جديد
+        window.addUser = function () {
+            let userLink = document.getElementById("userLink").value;
+            let user = document.getElementById("user").value.trim();
+            let imageInput = document.getElementById("imageInput").files[0];
+
+            if (!userLink || !user) {
+                alert("يرجى اختيار Link وإدخال User!");
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                push(ref(db, "users/"), {
+                    user,
+                    link: userLink,
+                    image: e.target.result || ""
+                }).then(() => {
+                    alert("تمت إضافة اليوزر بنجاح!");
+                    document.getElementById("user").value = "";
+                    document.getElementById("imageInput").value = "";
+                }).catch(error => console.error("خطأ في الإضافة:", error));
+            };
+
+            if (imageInput) {
+                reader.readAsDataURL(imageInput);
+            } else {
+                push(ref(db, "users/"), { user, link: userLink, image: "" });
+            }
+        };
+
+        window.onload = () => {
+            loadData();
+            loadLinks();
+        };
+    </script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; direction: rtl; background-color: #f5f5f5; margin: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); position: relative; }
+        h2 { color: #007bff; padding-bottom: 10px; }
+        input, select { width: 90%; padding: 10px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        .buttons { margin-top: 15px; }
+        .buttons button { padding: 10px; margin: 5px; cursor: pointer; }
+        .counter { position: absolute; left: 20px; top: 20px; font-size: 14px; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="counter" id="counter">عدد الروابط: 0</div>
+    <h2>إدخال البيانات</h2>
+
+    <input type="text" id="aviso" placeholder="aviso">
+    <input type="text" id="link" placeholder="link">
+    <input type="text" id="notes" placeholder="notes">
+    <button onclick="addData()">➕ إضافة البيانات</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>aviso</th>
+                <th>link</th>
+                <th>notes</th>
+                <th>حذف</th>
+            </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+    </table>
+
+    <hr>
+
+    <h2>إدخال يوزرات جاهزة</h2>
+    <select id="userLink"></select>
+    <input type="text" id="user" placeholder="أدخل اسم المستخدم">
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="addUser()">➕ إضافة يوزر</button>
+</div>
+
+</body>
+</html>
