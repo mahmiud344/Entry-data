@@ -40,6 +40,17 @@
         </thead>
         <tbody id="dataTableBody"></tbody>
     </table>
+
+    <hr>
+
+    <h2>إدخال يوزرات جاهزة</h2>
+    <select id="userLink">
+        <option value="">-- اختر aviso --</option>
+    </select>
+    <input type="text" id="user" placeholder="أدخل اسم المستخدم">
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="addUserButton">➕ إضافة يوزر</button>
+    <p class="success-message" id="userSuccess">✅ تم إضافة اليوزر بنجاح!</p>
 </div>
 
 <!-- Firebase -->
@@ -61,6 +72,8 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
+    const avisoSet = new Set();
+
     function addData() {
         let aviso = document.getElementById("aviso").value.trim();
         let link = document.getElementById("link").value.trim();
@@ -72,18 +85,30 @@
         }
 
         const dataRef = ref(database, "data/");
-        push(dataRef, { aviso, link, notes })
-            .then(() => {
-                showSuccessMessage("dataSuccess");
+        push(dataRef, { aviso, link, notes }).then(() => {
+            showSuccessMessage("dataSuccess");
 
-                document.getElementById("aviso").value = "";
-                document.getElementById("link").value = "";
-                document.getElementById("notes").value = "";
-            })
-            .catch((error) => {
-                console.error("خطأ أثناء الإضافة:", error);
-                alert("حدث خطأ أثناء الإضافة: " + error.message);
-            });
+            document.getElementById("aviso").value = "";
+            document.getElementById("link").value = "";
+            document.getElementById("notes").value = "";
+        });
+    }
+
+    function addUser() {
+        let user = document.getElementById("user").value.trim();
+        let userLink = document.getElementById("userLink").value;
+
+        if (!user || !userLink) {
+            alert("يرجى اختيار aviso وإدخال اسم المستخدم");
+            return;
+        }
+
+        const usersRef = ref(database, "users/");
+        push(usersRef, { user, userLink }).then(() => {
+            showSuccessMessage("userSuccess");
+
+            document.getElementById("user").value = "";
+        });
     }
 
     function showSuccessMessage(id) {
@@ -97,6 +122,8 @@
         onValue(dataRef, (snapshot) => {
             const dataTableBody = document.getElementById("dataTableBody");
             dataTableBody.innerHTML = "";
+            avisoSet.clear();
+            document.getElementById("userLink").innerHTML = '<option value="">-- اختر aviso --</option>';
 
             let count = 0;
 
@@ -112,6 +139,15 @@
                 `;
 
                 dataTableBody.appendChild(row);
+
+                if (!avisoSet.has(data.aviso)) {
+                    avisoSet.add(data.aviso);
+                    let option = document.createElement("option");
+                    option.value = data.aviso;
+                    option.textContent = data.aviso;
+                    document.getElementById("userLink").appendChild(option);
+                }
+
                 count++;
             });
 
@@ -121,14 +157,11 @@
 
     function deleteRow(key) {
         const dataRef = ref(database, "data/" + key);
-        remove(dataRef)
-            .catch((error) => {
-                console.error("خطأ أثناء الحذف:", error);
-                alert("حدث خطأ أثناء الحذف: " + error.message);
-            });
+        remove(dataRef);
     }
 
     document.getElementById("addButton").addEventListener("click", addData);
+    document.getElementById("addUserButton").addEventListener("click", addUser);
 
     loadData();
 </script>
