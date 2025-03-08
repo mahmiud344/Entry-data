@@ -26,7 +26,7 @@
     <input type="text" id="aviso" placeholder="aviso">
     <input type="text" id="link" placeholder="link">
     <input type="text" id="notes" placeholder="notes">
-    <button onclick="addData()">➕ إضافة البيانات</button>
+    <button id="addButton">➕ إضافة البيانات</button>
     <p class="success-message" id="dataSuccess">✅ تم إضافة البيانات بنجاح!</p>
 
     <table>
@@ -40,17 +40,6 @@
         </thead>
         <tbody id="dataTableBody"></tbody>
     </table>
-
-    <hr>
-
-    <h2>إدخال يوزرات جاهزة</h2>
-    <select id="userLink">
-        <option value="">-- اختر aviso --</option>
-    </select>
-    <input type="text" id="user" placeholder="أدخل اسم المستخدم">
-    <input type="file" id="imageInput" accept="image/*">
-    <button onclick="addUser()">➕ إضافة يوزر</button>
-    <p class="success-message" id="userSuccess">✅ تم إضافة اليوزر بنجاح!</p>
 </div>
 
 <!-- Firebase -->
@@ -72,37 +61,29 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    const avisoSet = new Set();
-
     function addData() {
         let aviso = document.getElementById("aviso").value.trim();
         let link = document.getElementById("link").value.trim();
         let notes = document.getElementById("notes").value.trim();
 
-        if (!aviso || !link || !notes) return;
+        if (!aviso || !link || !notes) {
+            alert("يرجى ملء جميع الحقول");
+            return;
+        }
 
         const dataRef = ref(database, "data/");
-        push(dataRef, { aviso, link, notes });
+        push(dataRef, { aviso, link, notes })
+            .then(() => {
+                showSuccessMessage("dataSuccess");
 
-        showSuccessMessage("dataSuccess");
-
-        document.getElementById("aviso").value = "";
-        document.getElementById("link").value = "";
-        document.getElementById("notes").value = "";
-    }
-
-    function addUser() {
-        let user = document.getElementById("user").value.trim();
-        let userLink = document.getElementById("userLink").value;
-
-        if (!user || !userLink) return;
-
-        const usersRef = ref(database, "users/");
-        push(usersRef, { user, userLink });
-
-        showSuccessMessage("userSuccess");
-
-        document.getElementById("user").value = "";
+                document.getElementById("aviso").value = "";
+                document.getElementById("link").value = "";
+                document.getElementById("notes").value = "";
+            })
+            .catch((error) => {
+                console.error("خطأ أثناء الإضافة:", error);
+                alert("حدث خطأ أثناء الإضافة: " + error.message);
+            });
     }
 
     function showSuccessMessage(id) {
@@ -116,8 +97,6 @@
         onValue(dataRef, (snapshot) => {
             const dataTableBody = document.getElementById("dataTableBody");
             dataTableBody.innerHTML = "";
-            avisoSet.clear();
-            document.getElementById("userLink").innerHTML = '<option value="">-- اختر aviso --</option>';
 
             let count = 0;
 
@@ -133,15 +112,6 @@
                 `;
 
                 dataTableBody.appendChild(row);
-
-                if (!avisoSet.has(data.aviso)) {
-                    avisoSet.add(data.aviso);
-                    let option = document.createElement("option");
-                    option.value = data.aviso;
-                    option.textContent = data.aviso;
-                    document.getElementById("userLink").appendChild(option);
-                }
-
                 count++;
             });
 
@@ -151,8 +121,14 @@
 
     function deleteRow(key) {
         const dataRef = ref(database, "data/" + key);
-        remove(dataRef);
+        remove(dataRef)
+            .catch((error) => {
+                console.error("خطأ أثناء الحذف:", error);
+                alert("حدث خطأ أثناء الحذف: " + error.message);
+            });
     }
+
+    document.getElementById("addButton").addEventListener("click", addData);
 
     loadData();
 </script>
