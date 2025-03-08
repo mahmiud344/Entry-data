@@ -87,7 +87,6 @@
         const dataRef = ref(database, "data/");
         push(dataRef, { aviso, link, notes }).then(() => {
             showSuccessMessage("dataSuccess");
-
             document.getElementById("aviso").value = "";
             document.getElementById("link").value = "";
             document.getElementById("notes").value = "";
@@ -106,7 +105,6 @@
         const usersRef = ref(database, "users/");
         push(usersRef, { user, userLink }).then(() => {
             showSuccessMessage("userSuccess");
-
             document.getElementById("user").value = "";
         });
     }
@@ -129,13 +127,14 @@
 
             snapshot.forEach((childSnapshot) => {
                 let data = childSnapshot.val();
+                let key = childSnapshot.key;
                 let row = document.createElement("tr");
 
                 row.innerHTML = `
                     <td>${data.aviso}</td>
                     <td>${data.link}</td>
                     <td>${data.notes}</td>
-                    <td><button onclick="deleteRow('${childSnapshot.key}')">🗑 حذف</button></td>
+                    <td><button onclick="deleteRow('${key}')">🗑 حذف</button></td>
                 `;
 
                 dataTableBody.appendChild(row);
@@ -155,10 +154,16 @@
         });
     }
 
-    function deleteRow(key) {
-        const dataRef = ref(database, "data/" + key);
-        remove(dataRef);
-    }
+    window.deleteRow = function (key) {
+        if (confirm("هل أنت متأكد أنك تريد حذف هذا العنصر؟")) {
+            const dataRef = ref(database, `data/${key}`);
+            remove(dataRef).then(() => {
+                console.log("تم الحذف بنجاح");
+            }).catch((error) => {
+                console.error("خطأ أثناء الحذف:", error);
+            });
+        }
+    };
 
     document.getElementById("addButton").addEventListener("click", addData);
     document.getElementById("addUserButton").addEventListener("click", addUser);
