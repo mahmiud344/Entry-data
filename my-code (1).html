@@ -3,147 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدخال البيانات</title>
-    
-    <script type="module">
-        // استيراد مكتبات Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-
-        // تهيئة Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDxweauIz4QizJNJtlYw61R0MTvsvjXwng",
-            authDomain: "my-newjob-82e79.firebaseapp.com",
-            databaseURL: "https://my-newjob-82e79-default-rtdb.firebaseio.com",
-            projectId: "my-newjob-82e79",
-            storageBucket: "my-newjob-82e79.firebasestorage.app",
-            messagingSenderId: "389693962078",
-            appId: "1:389693962078:web:bc7f191e88ad167eaec1cf",
-            measurementId: "G-GV3L3X0M4F"
-        };
-
-        // تهيئة التطبيق وقاعدة البيانات
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // دالة لإضافة البيانات إلى Firebase
-        window.addData = function () {
-            let aviso = document.getElementById("aviso").value.trim();
-            let link = document.getElementById("link").value.trim();
-            let notes = document.getElementById("notes").value.trim();
-
-            if (!aviso || !link || !notes) {
-                alert("يرجى ملء جميع الحقول!");
-                return;
-            }
-
-            push(ref(db, "data/"), { aviso, link, notes })
-                .then(() => {
-                    alert("تمت الإضافة بنجاح!");
-                    document.getElementById("aviso").value = "";
-                    document.getElementById("link").value = "";
-                    document.getElementById("notes").value = "";
-                    loadLinks(); // تحديث قائمة الروابط
-                })
-                .catch(error => console.error("خطأ في الإضافة:", error));
-        };
-
-        // تحميل البيانات من Firebase تلقائيًا
-        function loadData() {
-            const tableBody = document.getElementById("dataTableBody");
-            tableBody.innerHTML = "";
-
-            onValue(ref(db, "data/"), (snapshot) => {
-                tableBody.innerHTML = "";
-                let count = 0;
-
-                snapshot.forEach(childSnapshot => {
-                    let data = childSnapshot.val();
-                    let id = childSnapshot.key;
-
-                    tableBody.innerHTML += `
-                        <tr>
-                            <td>${data.aviso}</td>
-                            <td>${data.link}</td>
-                            <td>${data.notes}</td>
-                            <td><button onclick="deleteData('${id}')">❌ حذف</button></td>
-                        </tr>`;
-                    count++;
-                });
-
-                document.getElementById("counter").innerText = `عدد الروابط: ${count}`;
-                loadLinks(); // تحديث قائمة الروابط في قائمة اليوزرات
-            });
-        }
-
-        // دالة حذف البيانات من Firebase
-        window.deleteData = function (id) {
-            remove(ref(db, "data/" + id))
-                .then(() => alert("تم الحذف بنجاح!"))
-                .catch(error => console.error("خطأ في الحذف:", error));
-        };
-
-        // تحميل الروابط في قائمة "إدخال يوزرات جاهزة"
-        function loadLinks() {
-            let select = document.getElementById("userLink");
-            select.innerHTML = '<option value="">اختر link</option>';
-
-            onValue(ref(db, "data/"), (snapshot) => {
-                snapshot.forEach(childSnapshot => {
-                    let data = childSnapshot.val();
-                    select.innerHTML += `<option value="${data.link}">${data.link}</option>`;
-                });
-            });
-        }
-
-        // دالة لإضافة يوزر جديد
-        window.addUser = function () {
-            let userLink = document.getElementById("userLink").value;
-            let user = document.getElementById("user").value.trim();
-            let imageInput = document.getElementById("imageInput").files[0];
-
-            if (!userLink || !user) {
-                alert("يرجى اختيار Link وإدخال User!");
-                return;
-            }
-
-            let reader = new FileReader();
-            reader.onload = function (e) {
-                push(ref(db, "users/"), {
-                    user,
-                    link: userLink,
-                    image: e.target.result || ""
-                }).then(() => {
-                    alert("تمت إضافة اليوزر بنجاح!");
-                    document.getElementById("user").value = "";
-                    document.getElementById("imageInput").value = "";
-                }).catch(error => console.error("خطأ في الإضافة:", error));
-            };
-
-            if (imageInput) {
-                reader.readAsDataURL(imageInput);
-            } else {
-                push(ref(db, "users/"), { user, link: userLink, image: "" });
-            }
-        };
-
-        window.onload = () => {
-            loadData();
-            loadLinks();
-        };
-    </script>
-
+    <title>إدارة البيانات</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; direction: rtl; background-color: #f5f5f5; margin: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); position: relative; }
-        h2 { color: #007bff; padding-bottom: 10px; }
-        input, select { width: 90%; padding: 10px; margin: 10px 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background-color: #007bff; color: white; }
-        .buttons { margin-top: 15px; }
-        .buttons button { padding: 10px; margin: 5px; cursor: pointer; }
-        .counter { position: absolute; left: 20px; top: 20px; font-size: 14px; color: #555; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); }
+        .counter { font-size: 14px; color: #555; margin-bottom: 10px; text-align: left; }
+        table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        th { background: #007bff; color: white; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+        input, select { width: calc(100% - 20px); padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .success-message { display: none; color: green; font-size: 14px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -156,6 +27,7 @@
     <input type="text" id="link" placeholder="link">
     <input type="text" id="notes" placeholder="notes">
     <button onclick="addData()">➕ إضافة البيانات</button>
+    <p class="success-message" id="dataSuccess">✅ تم إضافة البيانات بنجاح!</p>
 
     <table>
         <thead>
@@ -172,11 +44,118 @@
     <hr>
 
     <h2>إدخال يوزرات جاهزة</h2>
-    <select id="userLink"></select>
+    <select id="userLink">
+        <option value="">-- اختر aviso --</option>
+    </select>
     <input type="text" id="user" placeholder="أدخل اسم المستخدم">
     <input type="file" id="imageInput" accept="image/*">
     <button onclick="addUser()">➕ إضافة يوزر</button>
+    <p class="success-message" id="userSuccess">✅ تم إضافة اليوزر بنجاح!</p>
 </div>
+
+<!-- Firebase -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDxweauIz4QizJNJtlYw61R0MTvsvjXwng",
+        authDomain: "my-newjob-82e79.firebaseapp.com",
+        databaseURL: "https://my-newjob-82e79-default-rtdb.firebaseio.com",
+        projectId: "my-newjob-82e79",
+        storageBucket: "my-newjob-82e79.appspot.com",
+        messagingSenderId: "389693962078",
+        appId: "1:389693962078:web:bc7f191e88ad167eaec1cf",
+        measurementId: "G-GV3L3X0M4F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const avisoSet = new Set();
+
+    function addData() {
+        let aviso = document.getElementById("aviso").value.trim();
+        let link = document.getElementById("link").value.trim();
+        let notes = document.getElementById("notes").value.trim();
+
+        if (!aviso || !link || !notes) return;
+
+        const dataRef = ref(database, "data/");
+        push(dataRef, { aviso, link, notes });
+
+        showSuccessMessage("dataSuccess");
+
+        document.getElementById("aviso").value = "";
+        document.getElementById("link").value = "";
+        document.getElementById("notes").value = "";
+    }
+
+    function addUser() {
+        let user = document.getElementById("user").value.trim();
+        let userLink = document.getElementById("userLink").value;
+
+        if (!user || !userLink) return;
+
+        const usersRef = ref(database, "users/");
+        push(usersRef, { user, userLink });
+
+        showSuccessMessage("userSuccess");
+
+        document.getElementById("user").value = "";
+    }
+
+    function showSuccessMessage(id) {
+        let msg = document.getElementById(id);
+        msg.style.display = "block";
+        setTimeout(() => { msg.style.display = "none"; }, 2000);
+    }
+
+    function loadData() {
+        const dataRef = ref(database, "data/");
+        onValue(dataRef, (snapshot) => {
+            const dataTableBody = document.getElementById("dataTableBody");
+            dataTableBody.innerHTML = "";
+            avisoSet.clear();
+            document.getElementById("userLink").innerHTML = '<option value="">-- اختر aviso --</option>';
+
+            let count = 0;
+
+            snapshot.forEach((childSnapshot) => {
+                let data = childSnapshot.val();
+                let row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${data.aviso}</td>
+                    <td>${data.link}</td>
+                    <td>${data.notes}</td>
+                    <td><button onclick="deleteRow('${childSnapshot.key}')">🗑 حذف</button></td>
+                `;
+
+                dataTableBody.appendChild(row);
+
+                if (!avisoSet.has(data.aviso)) {
+                    avisoSet.add(data.aviso);
+                    let option = document.createElement("option");
+                    option.value = data.aviso;
+                    option.textContent = data.aviso;
+                    document.getElementById("userLink").appendChild(option);
+                }
+
+                count++;
+            });
+
+            document.getElementById("counter").innerText = `عدد الروابط: ${count}`;
+        });
+    }
+
+    function deleteRow(key) {
+        const dataRef = ref(database, "data/" + key);
+        remove(dataRef);
+    }
+
+    loadData();
+</script>
 
 </body>
 </html>
